@@ -15,6 +15,10 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        "neon-5g": "bg-speed-5g/20 text-speed-5g border-2 border-speed-5g hover:bg-speed-5g/30 hover:shadow-[var(--glow-green)] transition-all duration-300",
+        "neon-4g": "bg-speed-4g/20 text-speed-4g border-2 border-speed-4g hover:bg-speed-4g/30 hover:shadow-[var(--glow-red)] transition-all duration-300",
+        hologram: "bg-card/30 backdrop-blur-sm text-foreground border-2 border-primary/50 hover:border-primary hover:shadow-[var(--glow-blue)] transition-all duration-300",
+        cyber: "bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:opacity-90 shadow-[var(--glow-blue)] hover:shadow-[var(--glow-purple)] transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",
