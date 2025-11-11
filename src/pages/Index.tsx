@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ModeCard } from "@/components/ModeCard";
 import { Rocket, Radio } from "lucide-react";
@@ -6,17 +7,18 @@ import rocketBg from "@/assets/rocket-launch-bg.jpg";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [selectedMode, setSelectedMode] = useState<"4G" | "5G" | null>(null);
   const [launching, setLaunching] = useState(false);
 
   const handleLaunch = () => {
     if (!selectedMode) return;
     setLaunching(true);
-    // Simüle fırlatma - gerçek oyun mantığı buraya eklenecek
+    
+    // Navigate to game after animation
     setTimeout(() => {
-      alert(`${selectedMode} modunda fırlatma başarılı! 🚀`);
-      setLaunching(false);
-    }, 2000);
+      navigate("/game", { state: { mode: selectedMode } });
+    }, 1000);
   };
 
   return (
