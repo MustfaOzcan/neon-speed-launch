@@ -201,12 +201,32 @@ const Game = () => {
 
     const { rocket, obstacles } = state;
 
-    // Draw rocket
+    // Draw rocket with advanced graphics
     ctx.save();
     ctx.translate(rocket.x + rocket.width / 2, rocket.y + rocket.height / 2);
     
-    // Rocket body
-    ctx.fillStyle = gameMode === "5G" ? "#22c55e" : "#ef4444";
+    // Glow aura
+    if (gameMode === "5G") {
+      ctx.shadowColor = "#22c55e";
+      ctx.shadowBlur = 30;
+    } else {
+      ctx.shadowColor = "#ef4444";
+      ctx.shadowBlur = 15;
+    }
+
+    // Rocket body - metallic gradient
+    const bodyGradient = ctx.createLinearGradient(-15, -25, 15, 30);
+    if (gameMode === "5G") {
+      bodyGradient.addColorStop(0, "#34d399");
+      bodyGradient.addColorStop(0.5, "#10b981");
+      bodyGradient.addColorStop(1, "#059669");
+    } else {
+      bodyGradient.addColorStop(0, "#f87171");
+      bodyGradient.addColorStop(0.5, "#ef4444");
+      bodyGradient.addColorStop(1, "#dc2626");
+    }
+    
+    ctx.fillStyle = bodyGradient;
     ctx.beginPath();
     ctx.moveTo(-15, -25);
     ctx.lineTo(15, -25);
@@ -216,66 +236,270 @@ const Game = () => {
     ctx.closePath();
     ctx.fill();
 
-    // Rocket window
-    ctx.fillStyle = "#60a5fa";
+    // Metallic highlights
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
     ctx.beginPath();
-    ctx.arc(0, -10, 6, 0, Math.PI * 2);
+    ctx.moveTo(-12, -22);
+    ctx.lineTo(-8, -22);
+    ctx.lineTo(-8, 15);
+    ctx.lineTo(-12, 15);
+    ctx.closePath();
     ctx.fill();
 
-    // Rocket flame (animated)
-    if (state.frameCount % 4 < 2) {
-      ctx.fillStyle = "#f97316";
-      ctx.beginPath();
-      ctx.moveTo(-10, 20);
-      ctx.lineTo(0, 35);
-      ctx.lineTo(10, 20);
-      ctx.closePath();
-      ctx.fill();
+    // Side fins
+    ctx.fillStyle = gameMode === "5G" ? "#065f46" : "#991b1b";
+    ctx.beginPath();
+    ctx.moveTo(-15, 10);
+    ctx.lineTo(-25, 25);
+    ctx.lineTo(-15, 20);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.moveTo(15, 10);
+    ctx.lineTo(25, 25);
+    ctx.lineTo(15, 20);
+    ctx.closePath();
+    ctx.fill();
+
+    // Cockpit window - with reflection
+    const windowGradient = ctx.createRadialGradient(0, -10, 2, 0, -10, 8);
+    windowGradient.addColorStop(0, "#60a5fa");
+    windowGradient.addColorStop(0.7, "#3b82f6");
+    windowGradient.addColorStop(1, "#1e40af");
+    ctx.fillStyle = windowGradient;
+    ctx.beginPath();
+    ctx.arc(0, -10, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Window highlight
+    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.beginPath();
+    ctx.arc(-2, -12, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nose cone detail
+    ctx.strokeStyle = gameMode === "5G" ? "#10b981" : "#ef4444";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-15, -20);
+    ctx.lineTo(15, -20);
+    ctx.stroke();
+
+    // Engine nozzle
+    ctx.fillStyle = "#1f2937";
+    ctx.beginPath();
+    ctx.arc(0, 25, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    // Advanced rocket flame with particles
+    const flamePhase = state.frameCount % 8;
+    const flameIntensity = Math.sin(state.frameCount * 0.3) * 0.3 + 0.7;
+    
+    // Main flame core
+    const flameGradient = ctx.createRadialGradient(0, 30, 0, 0, 30, 25 * flameIntensity);
+    flameGradient.addColorStop(0, "#ffffff");
+    flameGradient.addColorStop(0.2, "#fef08a");
+    flameGradient.addColorStop(0.4, "#fb923c");
+    flameGradient.addColorStop(0.7, "#f97316");
+    flameGradient.addColorStop(1, "rgba(239, 68, 68, 0)");
+    
+    ctx.fillStyle = flameGradient;
+    ctx.beginPath();
+    ctx.moveTo(-8, 25);
+    ctx.quadraticCurveTo(-10, 30 + 15 * flameIntensity, -5 + Math.sin(flamePhase) * 3, 40 + 20 * flameIntensity);
+    ctx.quadraticCurveTo(0, 45 + 25 * flameIntensity, 5 + Math.cos(flamePhase) * 3, 40 + 20 * flameIntensity);
+    ctx.quadraticCurveTo(10, 30 + 15 * flameIntensity, 8, 25);
+    ctx.closePath();
+    ctx.fill();
+
+    // Flame particles
+    for (let i = 0; i < 5; i++) {
+      const particleOffset = (state.frameCount + i * 10) % 30;
+      const particleX = (Math.sin(state.frameCount * 0.1 + i) * 8);
+      const particleY = 30 + particleOffset * 2;
+      const particleSize = (1 - particleOffset / 30) * 4;
+      
+      if (particleSize > 0) {
+        ctx.fillStyle = `rgba(251, 146, 60, ${1 - particleOffset / 30})`;
+        ctx.beginPath();
+        ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // Glow effect for 5G
-    if (gameMode === "5G") {
-      ctx.shadowColor = "#22c55e";
-      ctx.shadowBlur = 20;
+    // Speed lines for 5G mode
+    if (gameMode === "5G" && state.frameCount % 3 === 0) {
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.3)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const lineY = -20 + i * 15;
+        ctx.beginPath();
+        ctx.moveTo(-30, lineY);
+        ctx.lineTo(-20, lineY);
+        ctx.stroke();
+      }
     }
 
     ctx.restore();
 
-    // Draw obstacles
+    // Draw obstacles with advanced graphics
     obstacles.forEach((obstacle) => {
       ctx.save();
       ctx.translate(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
 
       if (obstacle.type === "meteor") {
-        // Draw meteor
-        ctx.fillStyle = "#78716c";
+        // Meteor glow
+        ctx.shadowColor = "#ef4444";
+        ctx.shadowBlur = 15;
+
+        // Main meteor body with gradient
+        const meteorGradient = ctx.createRadialGradient(-5, -5, 0, 0, 0, obstacle.width / 2);
+        meteorGradient.addColorStop(0, "#a8a29e");
+        meteorGradient.addColorStop(0.5, "#78716c");
+        meteorGradient.addColorStop(1, "#44403c");
+        ctx.fillStyle = meteorGradient;
         ctx.beginPath();
         ctx.arc(0, 0, obstacle.width / 2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Crater details
-        ctx.fillStyle = "#57534e";
+        ctx.shadowBlur = 0;
+
+        // Crater details with depth
+        ctx.fillStyle = "#292524";
         ctx.beginPath();
-        ctx.arc(-5, -5, 3, 0, Math.PI * 2);
-        ctx.arc(5, 3, 4, 0, Math.PI * 2);
+        ctx.arc(-8, -6, 4, 0, Math.PI * 2);
         ctx.fill();
-      } else {
-        // Draw satellite
-        ctx.fillStyle = "#94a3b8";
-        ctx.fillRect(-15, -10, 30, 20);
         
-        // Solar panels
-        ctx.fillStyle = "#1e40af";
+        ctx.fillStyle = "#1c1917";
+        ctx.beginPath();
+        ctx.arc(-7, -7, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#292524";
+        ctx.beginPath();
+        ctx.arc(6, 4, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#1c1917";
+        ctx.beginPath();
+        ctx.arc(7, 3, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#292524";
+        ctx.beginPath();
+        ctx.arc(0, 8, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rough edges
+        ctx.strokeStyle = "#57534e";
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          const innerRadius = obstacle.width / 2 - 2;
+          const outerRadius = obstacle.width / 2 + Math.random() * 2;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(angle) * innerRadius, Math.sin(angle) * innerRadius);
+          ctx.lineTo(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius);
+          ctx.stroke();
+        }
+
+        // Fire trail
+        const trailGradient = ctx.createLinearGradient(0, 0, 20, 0);
+        trailGradient.addColorStop(0, "rgba(251, 146, 60, 0.6)");
+        trailGradient.addColorStop(1, "rgba(251, 146, 60, 0)");
+        ctx.fillStyle = trailGradient;
+        ctx.beginPath();
+        ctx.arc(obstacle.width / 3, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else {
+        // Satellite with advanced details
+        ctx.shadowColor = "#3b82f6";
+        ctx.shadowBlur = 10;
+
+        // Main body gradient
+        const bodyGradient = ctx.createLinearGradient(-15, -10, 15, 10);
+        bodyGradient.addColorStop(0, "#cbd5e1");
+        bodyGradient.addColorStop(0.5, "#94a3b8");
+        bodyGradient.addColorStop(1, "#64748b");
+        ctx.fillStyle = bodyGradient;
+        ctx.fillRect(-15, -10, 30, 20);
+
+        ctx.shadowBlur = 0;
+
+        // Panel details
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 1;
+        for (let i = -10; i < 15; i += 5) {
+          ctx.beginPath();
+          ctx.moveTo(i, -10);
+          ctx.lineTo(i, 10);
+          ctx.stroke();
+        }
+
+        // Solar panels with gradient
+        const solarGradient = ctx.createLinearGradient(-25, 0, -17, 0);
+        solarGradient.addColorStop(0, "#1e3a8a");
+        solarGradient.addColorStop(0.5, "#1e40af");
+        solarGradient.addColorStop(1, "#2563eb");
+        ctx.fillStyle = solarGradient;
         ctx.fillRect(-25, -8, 8, 16);
         ctx.fillRect(17, -8, 8, 16);
 
-        // Antenna
-        ctx.strokeStyle = "#cbd5e1";
+        // Solar panel cells
+        ctx.fillStyle = "rgba(59, 130, 246, 0.5)";
+        for (let i = -7; i < 8; i += 3) {
+          ctx.fillRect(-24, i, 6, 2);
+          ctx.fillRect(18, i, 6, 2);
+        }
+
+        // Solar panel glow
+        ctx.shadowColor = "#3b82f6";
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = "#60a5fa";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-25, -8, 8, 16);
+        ctx.strokeRect(17, -8, 8, 16);
+        
+        ctx.shadowBlur = 0;
+
+        // Antenna with detail
+        ctx.strokeStyle = "#e2e8f0";
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, -10);
         ctx.lineTo(0, -20);
         ctx.stroke();
+
+        // Antenna dish
+        ctx.fillStyle = "#cbd5e1";
+        ctx.beginPath();
+        ctx.arc(0, -20, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#3b82f6";
+        ctx.beginPath();
+        ctx.arc(0, -20, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Blinking light
+        if (state.frameCount % 30 < 15) {
+          ctx.fillStyle = "#ef4444";
+          ctx.shadowColor = "#ef4444";
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.arc(10, 0, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Body highlights
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fillRect(-13, -8, 8, 3);
+        
+        ctx.shadowBlur = 0;
       }
 
       ctx.restore();
